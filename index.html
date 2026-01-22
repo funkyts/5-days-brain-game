@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>다른 뇌로 사는 5일 (5 Days of a Different Brain)</title>
+
+  <!-- React 18 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            korean: ['Noto Sans KR', 'sans-serif'],
+          },
+          colors: {
+            bgDark: '#0f1419',
+            bgCard: 'rgba(25, 35, 45, 0.95)',
+            energy: '#22c55e',
+            mental: '#8b5cf6',
+            trust: '#3b82f6',
+            money: '#eab308',
+          },
+          animation: {
+            'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+            'flash': 'flash 0.5s ease-out forwards',
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'heartbeat': 'heartbeat 1s infinite',
+            'tunnel': 'tunnel 2s ease-in-out forwards',
+            'breathe': 'breathe 4s ease-in-out infinite',
+          },
+          keyframes: {
+            shake: {
+              '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+              '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+              '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+              '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+            },
+            flash: {
+              '0%': { opacity: '0.8', backgroundColor: '#fbbf24' },
+              '100%': { opacity: '0', backgroundColor: 'transparent' }
+            },
+            heartbeat: {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' }
+            },
+            tunnel: {
+              '0%': { maskImage: 'radial-gradient(circle, black 100%, transparent 100%)' },
+              '100%': { maskImage: 'radial-gradient(circle, black 30%, transparent 70%)' }
+            },
+            breathe: {
+              '0%, 100%': { transform: 'scale(1)', opacity: 0.8 },
+              '50%': { transform: 'scale(1.1)', opacity: 1 }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Framer Motion -->
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+  <!-- Howler.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
+    rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #0f1419;
+      color: #f1f5f9;
+      font-family: 'Noto Sans KR', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Screen Effects */
+    .effect-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .effect-vortex {
+      animation: vortex 10s linear infinite;
+      background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.8) 90%);
+      filter: hue-rotate(180deg) blur(1px);
+    }
+
+    .effect-tunnel {
+      background: radial-gradient(circle, transparent 30%, rgba(0, 0, 0, 0.9) 80%);
+      z-index: 45;
+    }
+
+    .effect-blur {
+      backdrop-filter: blur(8px);
+    }
+
+    .effect-warm {
+      background: rgba(251, 191, 36, 0.1);
+      transition: background 1s ease;
+    }
+
+    .effect-red-pulse {
+      animation: pulse-red 2s infinite;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    @keyframes vortex {
+      0% {
+        transform: scale(1) rotate(0deg);
+      }
+
+      50% {
+        transform: scale(1.1) rotate(180deg);
+      }
+
+      100% {
+        transform: scale(1) rotate(360deg);
+      }
+    }
+
+    @keyframes pulse-red {
+
+      0%,
+      100% {
+        opacity: 0.2;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0f1419;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+  </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+    const { motion, AnimatePresence } = window.Motion;
+
+    // --- AUDIO MANAGER ---
+    const AudioAssets = {
+      bgm: {
+        calm: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3",
+        tension: "https://assets.mixkit.co/music/preview/mixkit-driving-ambition-32.mp3",
+        hope: "https://assets.mixkit.co/music/preview/mixkit-spirit-of-the-woods-149.mp3",
+        crisis: "https://assets.mixkit.co/music/preview/mixkit-horror-drone-loop-2041.mp3"
+      },
+      sfx: {
+        click: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
+        notification: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
+        success: "https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3",
+        anxiety: "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3",
+        insight: "https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3",
+        heartbeat: "https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3",
+        alarm: "https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3"
+      }
+    };
+
+    const AudioManager = {
+      bgmHowl: null,
+      currentTrack: null,
+
+      playBGM: (trackKey) => {
+        if (AudioManager.currentTrack === trackKey) return;
+
+        if (AudioManager.bgmHowl) {
+          AudioManager.bgmHowl.fade(0.5, 0, 1000);
+          setTimeout(() => AudioManager.bgmHowl.stop(), 1000);
+        }
+
+        const src = AudioAssets.bgm[trackKey];
+        if (!src) return;
+
+        AudioManager.bgmHowl = new Howl({
+          src: [src],
+          html5: true,
+          loop: true,
+          volume: 0,
+        });
+
+        AudioManager.bgmHowl.play();
+        AudioManager.bgmHowl.fade(0, 0.4, 2000);
+        AudioManager.currentTrack = trackKey;
+      },
+
+      playSFX: (sfxKey) => {
+        const src = AudioAssets.sfx[sfxKey];
+        if (!src) return;
+        const sound = new Howl({ src: [src], volume: 0.5 });
+        sound.play();
+      }
+    };
+
+    // --- INTRO SEQUENCE ---
+    const INTRO_SEQUENCE = [
+      { text: "당신은 남들과 조금 다릅니다.", delay: 2500 },
+      { text: "집중하려 해도 생각이 흩어지고,\n해야 할 일을 미루다 자책하게 됩니다.", delay: 3500 },
+      { text: "이건 의지의 문제가 아닙니다.", delay: 2500, effect: "blur" },
+      { text: "당신의 뇌는 그냥... 다르게 작동할 뿐입니다.", delay: 3000, effect: "warm" },
+      { text: "앞으로 5일간,\n당신은 '다른 뇌'로 살아가는 법을 배우게 됩니다.", delay: 4000 },
+      { text: "무너지지 않는 것이 목표입니다.", delay: 2500, type: "critic" },
+      { text: "준비되셨나요?", delay: 2000, effect: "warm" }
+    ];
+
+    // --- PHASE IMAGES ---
+    const PHASE_IMAGES = {
+      1: {
+        morning: '/assets/images/day1_morning.png',
+        afternoon: '/assets/images/day1_afternoon.png',
+        evening: '/assets/images/day1_evening.png'
+      },
+      2: {
+        morning: '/assets/images/day2_morning.png',
+        afternoon: '/assets/images/day2_afternoon.png',
+        evening: '/assets/images/day2_evening.png'
+      },
+      3: {
+        morning: '/assets/images/day3_morning.png',
+        afternoon: '/assets/images/day3_afternoon.png',
+        evening: '/assets/images/day3_evening.png'
+      },
+      4: {
+        crisis_morning: '/assets/images/day4_crisis_morning.png',
+        stable_morning: '/assets/images/day4_stable_morning.png',
+        evening: '/assets/images/day4_evening.png'
+      },
+      5: {
+        morning: '/assets/images/day5_morning.png',
+        afternoon: '/assets/images/day5_afternoon.png',
+        evening: '/assets/images/day5_evening.png'
+      }
+    };
+
+    // --- GAME DATA (5-DAY STRUCTURE) ---
+    const STORY_DATA = {
+      1: {
+        title: "각성",
+        morning: {
+          sequence: [
+            { text: "삐-삐-삐-", effect: "shake", sound: "alarm" },
+            { text: "알람이 귀를 찌릅니다. 눈꺼풀이 5kg 아령처럼 무겁습니다.", effect: "blur" },
+            { text: "핸드폰 화면: 7:47 AM\n알람 설정: 7:00 AM\n스누즈 횟수: 4회", style: "mono" },
+            { text: "옆집에서 출근 준비하는 소리가 들립니다.\n발소리. 문 닫는 소리. 차 시동 소리.", sound: "click" },
+            { text: "저 사람은 벌써 나가네.\n넌 아직도 이불 속이야?", speaker: "비판자", style: "critic" }
+          ],
+          choices: [
+            { id: "force", text: "이를 악물고 일어난다", subtext: "자책하며", stats: { energy: -15, mental: -10 }, next: "afternoon", result: "당신은 몸을 일으켰습니다. 머리가 어지럽습니다.\n시작부터 에너지를 너무 많이 썼습니다.\n오늘 하루가 길어질 것 같습니다." },
+            { id: "micro", text: "일단 물 한 잔만", subtext: "작은 목표", stats: { energy: -5, mental: +5 }, insight: "micro_goal", next: "afternoon", result: "물 한 잔.\n그것만 생각합니다.\n신기하게도, 물을 마시러 일어나니 몸이 조금씩 움직입니다.\n뇌를 속인 겁니다." },
+            { id: "stay", text: "5분만 더...", subtext: "위험한 선택", stats: { energy: +5, mental: -15, trust: -5 }, next: "afternoon", selfBlame: true, result: "5분이 30분이 되었습니다.\n8:23 AM.\n완전히 늦었습니다. 자책의 목소리가 커집니다." }
+          ],
+          timer: 10 // 10 seconds time pressure
+        },
+        afternoon: {
+          sequence: [
+            { text: "업무를 시작하려 합니다.", effect: "" },
+            { text: "브라우저 탭: 27개\n열린 문서: 8개\n완료한 일: 0개", style: "mono" },
+            { text: "위키백과에서 시작한 검색이 어느새 '고래의 수면 패턴'까지 와버렸습니다.", effect: "vortex" },
+            { text: "뭐 하는 거야, 지금?\n마감이 내일인데?", speaker: "비판자", style: "critic" }
+          ],
+          minigame: "focusGrab", // Trigger minigame
+          next: "evening"
+        },
+        evening: {
+          sequence: [
+            { text: "해가 졌습니다.", effect: "dim" },
+            { text: "오늘 계획했던 것의 절반도 못 했습니다.", effect: "blur" },
+            { text: "머릿속에서 리뷰가 시작됩니다.", effect: "heartbeat" }
+          ],
+          voiceBattle: true, // Special UI for voice battle
+          choices: [
+            { id: "agree", text: "맞아, 내가 문제야...", stats: { mental: -20 }, selfBlame: true, next: "summary", effect: "vortex", result: "자책의 소용돌이가 시작됩니다.\n당신은 이불 속으로 파고들었습니다." },
+            { id: "observe", text: "지금 내가 자책하고 있구나", subtext: "감정 관찰", stats: { mental: +10 }, insight: "observe_emotion", next: "summary", effect: "warm", result: "'아, 지금 내가 자책하고 있구나.'\n이 작은 인식이 소용돌이를 멈춥니다.\n감정에 이름을 붙이는 것, 그것만으로도 힘이 줄어듭니다." },
+            { id: "distract", text: "생각하기 싫어", subtext: "영상 시청", stats: { mental: -5, energy: -5 }, next: "summary", result: "유튜브를 틀었습니다. 잠들기 전까지 3시간.\n생각은 멈췄지만, 근본적인 해결은 아니었습니다." }
+          ]
+        }
+      },
+      2: {
+        title: "폭풍",
+        morning: {
+          sequence: [
+            { text: "어젯밤에 잠을 설쳤습니다.", effect: "blur" },
+            { text: "커피를 내리다가 문득 생각납니다.\n'아, 지갑 어디 뒀지?'", sound: "anxiety" },
+            { text: "10분간 지갑을 찾다가 커피가 넘쳤습니다.", effect: "shake" }
+          ],
+          choices: [
+            { id: "blame", text: "나는 왜 맨날 이 모양일까...", stats: { mental: -15 }, selfBlame: true, next: "afternoon", result: "자책의 파도가 밀려옵니다.\n아침부터 무거운 마음으로 하루를 시작합니다." },
+            { id: "system", text: "지갑은 항상 현관 옆에 두자", subtext: "시스템 만들기", stats: { mental: +5 }, tool: "designated_spot", next: "afternoon", result: "현관 옆에 작은 바구니를 놓기로 했습니다.\n당신의 잘못이 아닙니다. 시스템이 없었을 뿐입니다.\n[대처 도구 획득: 물건의 집]" }
+          ]
+        },
+        afternoon: {
+          text: "갑자기 새로운 아이디어가 떠오릅니다. '이거다! 이걸로 대박 나겠어!'",
+          effect: "flash",
+          choices: [
+            { id: "act", text: "당장 시작하자!", subtext: "충동적 행동", stats: { energy: -20, money: -10 }, next: "evening", result: "새벽 4시까지 계획서를 썼습니다.\n하지만 이 흥분이 얼마나 갈까요?" },
+            { id: "parking", text: "일단 메모만 해두자", subtext: "아이디어 파킹", stats: { mental: +10 }, tool: "idea_parking", next: "evening", result: "아이디어를 노트에 적었습니다.\n'일주일 후에도 좋으면 그때 하자.' 현명한 전략입니다." }
+          ]
+        },
+        evening: {
+          text: "감정의 롤러코스터가 바닥으로 떨어집니다. '왜 나는 이렇게 기복이 심할까?'",
+          effect: "rain",
+          choices: [
+            { id: "normal", text: "나는 비정상이야", stats: { mental: -20 }, selfBlame: true, next: "summary", result: "자책의 소용돌이." },
+            { id: "wave", text: "도파민 파도일 뿐이야", subtext: "특성 이해", stats: { mental: +10 }, insight: "dopamine_wave", next: "summary", effect: "warm", result: "이것은 결함이 아니라 특성입니다.\n[인사이트 획득: 감정의 파도]" }
+          ]
+        }
+      },
+      3: {
+        title: "추락",
+        morning: {
+          text: "발표 자료를 열었습니다. 그런데... 어제 수정한 파일이 저장되지 않았습니다.",
+          effect: "shake",
+          choices: [
+            { id: "panic", text: "패닉에 빠진다", stats: { mental: -15 }, next: "afternoon", result: "허둥지둥 엉성한 자료를 다시 만듭니다." },
+            { id: "calm", text: "핵심만 추리자", stats: { trust: +5 }, next: "afternoon", result: "최선은 아니지만 핵심은 전달했습니다." }
+          ]
+        },
+        afternoon: {
+          text: "상사가 다가옵니다. '이 부분은 좀 아쉬웠네요. 다음엔 신경 써주세요.'",
+          choices: [
+            { id: "collapse", text: "죄송합니다... (무너진다)", stats: { mental: -25 }, selfBlame: true, next: "evening", effect: "tunnel", result: "화장실로 도망쳐 한숨을 쉽니다." },
+            { id: "separate", text: "실수는 실수일 뿐", subtext: "실수 ≠ 나", stats: { mental: +5 }, insight: "mistake_not_me", next: "evening", effect: "warm", result: "실수는 당신의 가치를 결정하지 않습니다." }
+          ]
+        },
+        evening: {
+          text: "집에 오는 길, 아까의 실수가 계속 떠오릅니다.",
+          choices: [
+            { id: "spiral", text: "계속 생각한다", stats: { mental: -20 }, selfBlame: true, next: "summary", result: "밤새 같은 생각이 반복됩니다." },
+            { id: "breathe", text: "호흡에 집중한다", subtext: "호흡 닻", stats: { mental: +15 }, tool: "breath_anchor", next: "summary", effect: "calm", result: "생각은 닻을 내린 배처럼 호흡에 머뭅니다." }
+          ]
+        }
+      },
+      4: {
+        title: "바닥",
+        branchCheck: (stats, selfBlameCount) => (stats.mental < 40 || selfBlameCount >= 3) ? "crisis" : "stable",
+        crisis: {
+          morning: {
+            sequence: [
+              { text: "...", effect: "blur", sound: "silence" },
+              { text: "눈을 떴습니다. 하지만 일어날 수가 없습니다.", effect: "tunnel" },
+              { text: "몸이 침대에 녹아내린 것 같습니다.\n천장이 멀게 느껴집니다.", effect: "dissociation" },
+              { text: "이것은 게으름이 아닙니다.\n당신의 시스템이 과부하로 셧다운된 것입니다.", style: "critic" }
+            ],
+            choices: [{ id: "stay", text: "...", next: "afternoon", result: "시간이 흐릅니다." }]
+          },
+          afternoon: {
+            sequence: [
+              { text: "핸드폰이 울립니다. 오래된 지인입니다.", sound: "alarm", effect: "shake" },
+              { text: "받아야 할지 말아야 할지 고민됩니다.", effect: "heartbeat" }
+            ],
+            choices: [
+              { id: "ignore", text: "받지 않는다", stats: {}, next: "evening", result: "전화가 끊깁니다.\n문자가 옵니다. '힘들면 말해. 혼자 앓지 말고.'" },
+              { id: "answer", text: "받는다", stats: { mental: +25 }, insight: "ask_for_help", next: "evening", effect: "warm", result: "친구에게 털어놓았습니다.\n'나도 그랬어. 너만 그런 거 아니야.'\n혼자 다 감당하지 마세요. 도움을 요청하는 건 용기입니다.\n[인사이트 획득: 도움 요청하기]" }
+            ]
+          }
+        },
+        stable: {
+          morning: {
+            text: "인터넷에서 글을 봅니다. '성인 ADHD: 당신은 게으른 게 아닙니다'",
+            choices: [
+              { id: "read", text: "읽어본다", stats: { mental: +15 }, insight: "adhd_understanding", next: "evening", effect: "flash", result: "마치 내 이야기 같습니다.\n집중력 부족이 아니라 집중 조절의 어려움.\n나만 이런 게 아니었습니다." }
+            ]
+          },
+          afternoon: {
+            text: "조금은 가벼운 마음으로 산책을 나갑니다.",
+            choices: [{ id: "walk", text: "걷는다", next: "evening", result: "바람이 시원합니다." }]
+          }
+        },
+        evening: {
+          text: "바닥을 찍었다는 것은, 더 이상 내려갈 곳이 없다는 뜻입니다.\n이제 올라가기만 하면 됩니다.",
+          effect: "warm",
+          choices: [
+            { id: "rest", text: "휴식", stats: { energy: +20 }, next: "summary", result: "깊은 잠을 잡니다." }
+          ]
+        }
+      },
+      5: {
+        title: "다시",
+        morning: {
+          text: "5일째 아침. 같은 알람, 같은 침대.\n하지만 당신은 달라졌습니다.",
+          choices: [
+            { id: "reflect", text: "나는 무엇이 달라졌나?", stats: {}, next: "afternoon", result: "지난 5일간의 생존 기록이 스쳐 지나갑니다." }
+          ]
+        },
+        afternoon: {
+          text: "오늘, 작은 선택들이 모여 당신의 하루를 만듭니다.",
+          choices: [
+            { id: "apply", text: "배운 대로 하루를 보낸다", stats: { energy: -10, mental: +10, trust: +10 }, next: "evening", result: "완벽하지 않았지만, 무너지지 않았습니다." }
+          ]
+        },
+        evening: {
+          text: "5일이 끝났습니다. 당신은 살아남았습니다.",
+          choices: [
+            { id: "end", text: "나의 5일을 돌아본다", stats: {}, next: "review", result: "..." }
+          ]
+        }
+      }
+    };
+
+    // --- COMPONENTS ---
+
+    // Fixed Typewriter to prevent character skipping
+    const Typewriter = ({ text = "", onComplete, speed = 30 }) => {
+      const [displayedText, setDisplayedText] = useState("");
+
+      useEffect(() => {
+        let i = 0;
+        setDisplayedText("");
+
+        if (!text) {
+          if (onComplete) onComplete();
+          return;
+        }
+
+        const timer = setInterval(() => {
+          if (i < text.length) {
+            i++;
+            setDisplayedText(text.slice(0, i)); // Robust slicing
+            if (i % 3 === 0) AudioManager.playSFX('click');
+          } else {
+            clearInterval(timer);
+            if (onComplete) onComplete();
+          }
+        }, speed);
+        return () => clearInterval(timer);
+      }, [text]);
+
+      return <div className="whitespace-pre-line leading-relaxed text-lg">{displayedText}</div>;
+    };
+
+    const StatBar = ({ label, value, color, max = 100 }) => (
+      <div className="flex flex-col w-full mb-2">
+        <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <span>{label}</span>
+          <span>{value}</span>
+        </div>
+        <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${(value / max) * 100}%` }}
+            transition={{ duration: 0.5 }}
+            className="h-full rounded-full"
+            style={{ backgroundColor: color }}
+          />
+        </div>
+      </div>
+    );
+
+    const Button = ({ children, onClick, variant = "primary", className = "", disabled }) => {
+      const baseStyle = "w-full py-4 px-6 rounded-xl font-bold transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
+      const variants = {
+        primary: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/30",
+        secondary: "bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700",
+        choice: "bg-bgCard border border-gray-600 hover:border-blue-400 text-left hover:bg-gray-800 mb-3 group"
+      };
+
+      return (
+        <button
+          onClick={() => {
+            if (!disabled) {
+              AudioManager.playSFX('click');
+              onClick();
+            }
+          }}
+          className={`${baseStyle} ${variants[variant]} ${className}`}
+          disabled={disabled}
+        >
+          {children}
+        </button>
+      );
+    };
+
+    const ScreenEffect = ({ type }) => {
+      if (!type) return null;
+
+      const effects = {
+        shake: "animate-shake",
+        blur: "effect-blur fixed inset-0 z-40 transition-all duration-1000 pointer-events-none",
+        flash: "animate-flash bg-yellow-400 fixed inset-0 z-50 pointer-events-none",
+        vortex: "effect-vortex fixed inset-0 z-40 pointer-events-none opacity-50",
+        rain: "effect-rain fixed inset-0 z-40 pointer-events-none",
+        warm: "effect-warm fixed inset-0 z-40 pointer-events-none",
+        tunnel: "effect-tunnel fixed inset-0 pointer-events-none animate-tunnel",
+        heartbeat: "animate-heartbeat",
+        "red-pulse": "effect-red-pulse fixed inset-0 pointer-events-none z-40"
+      };
+
+      return <div className={effects[type] || ""} />;
+    };
+
+    // --- TURN IMAGE COMPONENT ---
+    const TurnImage = ({ day, phase, branch }) => {
+      const [loaded, setLoaded] = useState(false);
+
+      // Get image path based on day, phase, and branch
+      const getImagePath = () => {
+        const dayImages = PHASE_IMAGES[day];
+        if (!dayImages) return null;
+
+        // Handle Day 4 special branches
+        if (day === 4 && (phase === 'morning')) {
+          if (branch === 'crisis') return dayImages.crisis_morning;
+          if (branch === 'stable') return dayImages.stable_morning;
+        }
+
+        return dayImages[phase] || null;
+      };
+
+      const imagePath = getImagePath();
+      if (!imagePath) return null;
+
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: loaded ? 1 : 0, scale: loaded ? 1 : 0.95 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="w-full max-w-xs mx-auto mb-6 rounded-xl overflow-hidden shadow-2xl border border-gray-700/50"
+        >
+          <img
+            src={imagePath}
+            alt={`Day ${day} ${phase}`}
+            className="w-full h-auto"
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            style={{ filter: 'brightness(0.9) contrast(1.1)' }}
+          />
+        </motion.div>
+      );
+    };
+
+    // --- COUNT UP COMPONENT ---
+    const CountUp = ({ end, duration = 2000 }) => {
+      const [count, setCount] = useState(0);
+
+      useEffect(() => {
+        let startTime;
+        let animationFrame;
+
+        const animate = (time) => {
+          if (!startTime) startTime = time;
+          const progress = time - startTime;
+          const percentage = Math.min(progress / duration, 1);
+
+          // Easing function for smooth effect
+          const easeOutQuart = 1 - Math.pow(1 - percentage, 4);
+
+          setCount(Math.floor(end * easeOutQuart));
+
+          if (progress < duration) {
+            animationFrame = requestAnimationFrame(animate);
+          }
+        };
+
+        animationFrame = requestAnimationFrame(animate);
+
+        return () => cancelAnimationFrame(animationFrame);
+      }, [end, duration]);
+
+      return <>{count}</>;
+    };
+
+    // --- MINIGAME: FOCUS GRAB ---
+    const FocusMinigame = ({ onComplete }) => {
+      const [score, setScore] = useState(0);
+      const [timeLeft, setTimeLeft] = useState(10);
+      const [items, setItems] = useState([]);
+      const containerRef = useRef(null);
+
+      useEffect(() => {
+        // Spawn items logic
+        const spawnTimer = setInterval(() => {
+          if (Math.random() > 0.3) {
+            const isTarget = Math.random() > 0.4;
+            const newItem = {
+              id: Math.random(),
+              x: Math.random() * 80 + 10,
+              y: Math.random() * 80 + 10,
+              isTarget: isTarget,
+              text: isTarget ? ["마감", "중요", "집중", "핵심"][Math.floor(Math.random() * 4)] : ["SNS", "유튜브", "쇼핑", "잡념"][Math.floor(Math.random() * 4)]
+            };
+            setItems(prev => [...prev, newItem]);
+            // Remove item after delay
+            setTimeout(() => {
+              setItems(prev => prev.filter(i => i.id !== newItem.id));
+            }, 2000);
+          }
+        }, 500);
+
+        const gameTimer = setInterval(() => {
+          setTimeLeft(prev => {
+            if (prev <= 1) {
+              clearInterval(spawnTimer);
+              clearInterval(gameTimer);
+              onComplete(score > 3);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => {
+          clearInterval(spawnTimer);
+          clearInterval(gameTimer);
+        };
+      }, [score]);
+
+      const handleTap = (item) => {
+        if (item.isTarget) {
+          setScore(s => s + 1);
+          AudioManager.playSFX('success');
+        } else {
+          setScore(s => s - 1);
+          AudioManager.playSFX('anxiety');
+        }
+        setItems(prev => prev.filter(i => i.id !== item.id));
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center overflow-hidden" ref={containerRef}>
+          <div className="absolute top-10 text-white text-2xl font-bold">집중력을 잡으세요! {timeLeft}s</div>
+          <div className="absolute top-20 text-green-400 text-xl">Score: {score}</div>
+          {items.map(item => (
+            <motion.button
+              key={item.id}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className={`absolute px-4 py-2 rounded-full font-bold shadow-lg ${item.isTarget ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+              style={{ left: `${item.x}%`, top: `${item.y}%` }}
+              onClick={() => handleTap(item)}
+            >
+              {item.text}
+            </motion.button>
+          ))}
+        </div>
+      );
+    };
+
+    // --- MAIN GAME COMPONENT ---
+    const App = () => {
+      const [gameState, setGameState] = useState('START');
+      const [day, setDay] = useState(1);
+      const [phase, setPhase] = useState('morning');
+      const [stats, setStats] = useState({ energy: 70, mental: 60, trust: 50, money: 40 });
+      const [playerName, setPlayerName] = useState("");
+      const [insights, setInsights] = useState([]);
+      const [copingTools, setCopingTools] = useState([]);
+      const [selfBlameCount, setSelfBlameCount] = useState(0);
+      const [currentEffect, setCurrentEffect] = useState(null);
+      const [textComplete, setTextComplete] = useState(false);
+      const [sceneResult, setSceneResult] = useState(null);
+      const [activeBranch, setActiveBranch] = useState("default");
+
+      // New State for Enhanced Features
+      const [sequenceIndex, setSequenceIndex] = useState(0);
+      const [choiceTimer, setChoiceTimer] = useState(null);
+      const [minigameActive, setMinigameActive] = useState(false);
+      const [introIndex, setIntroIndex] = useState(0);
+      const [choiceHistory, setChoiceHistory] = useState([]);
+
+      // Effects trigger
+      const triggerEffect = (effect) => {
+        setCurrentEffect(effect);
+        setTimeout(() => setCurrentEffect(null), effect === 'vortex' || effect === 'tunnel' ? 3000 : 1000);
+      };
+
+      // Intro Logic
+      useEffect(() => {
+        if (gameState === 'INTRO') {
+          AudioManager.playBGM('tension');
+          if (introIndex < INTRO_SEQUENCE.length) {
+            const step = INTRO_SEQUENCE[introIndex];
+            if (step.effect) triggerEffect(step.effect);
+            const timer = setTimeout(() => {
+              setIntroIndex(prev => prev + 1);
+            }, step.delay);
+            return () => clearTimeout(timer);
+          } else {
+            setGameState('NAME');
+          }
+        }
+      }, [gameState, introIndex]);
+
+      // Timer Logic
+      useEffect(() => {
+        if (choiceTimer !== null && choiceTimer > 0 && !sceneResult) {
+          const timer = setInterval(() => {
+            setChoiceTimer(prev => prev - 1);
+          }, 1000);
+          return () => clearInterval(timer);
+        } else if (choiceTimer === 0 && !sceneResult) {
+          // Time run out handling
+          handleChoice({
+            text: "시간 초과...",
+            stats: { mental: -10 },
+            result: "너무 오래 망설였습니다. 기회를 놓쳤습니다.",
+            next: getCurrentContent().next || "afternoon",
+            effect: "shake"
+          });
+          setChoiceTimer(null);
+        }
+      }, [choiceTimer, sceneResult]);
+
+      // Timer Initialization Effect (must be at top level, not inside conditional)
+      useEffect(() => {
+        if (gameState === 'PLAYING') {
+          const content = getCurrentContent();
+          const isSequence = content.sequence && sequenceIndex < content.sequence.length;
+          if (!isSequence && !sceneResult && content.timer && choiceTimer === null) {
+            setChoiceTimer(content.timer);
+          }
+        }
+      }, [gameState, phase, sequenceIndex, sceneResult]);
+
+      // Game Logic Helpers
+      const getCurrentContent = () => {
+        const dayData = STORY_DATA[day];
+        if (!dayData) return { text: "", choices: [] };
+
+        if (dayData.branchCheck) {
+          const branch = activeBranch === "default" ? dayData.branchCheck(stats, selfBlameCount) : activeBranch;
+          if (activeBranch === "default") setActiveBranch(branch);
+          if (dayData[branch] && dayData[branch][phase]) {
+            return dayData[branch][phase];
+          }
+        }
+        return dayData[phase] || { text: "", choices: [] };
+      };
+
+      const handleChoice = (choice) => {
+        setChoiceTimer(null); // Stop timer
+
+        // Update Stats
+        setStats(prev => ({
+          energy: Math.min(100, Math.max(0, prev.energy + (choice.stats?.energy || 0))),
+          mental: Math.min(100, Math.max(0, prev.mental + (choice.stats?.mental || 0))),
+          trust: Math.min(100, Math.max(0, prev.trust + (choice.stats?.trust || 0))),
+          money: Math.min(100, Math.max(0, prev.money + (choice.stats?.money || 0))),
+        }));
+
+        if (choice.insight && !insights.includes(choice.insight)) {
+          setInsights(prev => [...prev, choice.insight]);
+          AudioManager.playSFX('insight');
+        }
+        if (choice.tool && !copingTools.includes(choice.tool)) {
+          setCopingTools(prev => [...prev, choice.tool]);
+          AudioManager.playSFX('success');
+        }
+        if (choice.selfBlame) setSelfBlameCount(prev => prev + 1);
+        if (choice.effect) triggerEffect(choice.effect);
+
+        // Record History
+        setChoiceHistory(prev => [...prev, {
+          day,
+          phase,
+          text: choice.text,
+          result: choice.result,
+          insight: choice.insight
+        }]);
+
+        setSceneResult({ text: choice.result, next: choice.next });
+      };
+
+      const proceedPhase = () => {
+        setSceneResult(null);
+        setTextComplete(false);
+        setSequenceIndex(0);
+        setChoiceTimer(null);
+
+        const content = getCurrentContent();
+        // Check for minigame in next phase or current phase transition
+        const next = sceneResult?.next;
+
+        if (next === 'summary') {
+          setGameState('SUMMARY');
+        } else if (next === 'review') {
+          setGameState('REVIEW');
+        } else if (next === 'ending') {
+          setGameState('ENDING');
+        } else {
+          setPhase(next);
+        }
+      };
+
+      const nextDay = () => {
+        if (day < 5) { // 5 Days
+          setDay(d => d + 1);
+          setPhase('morning');
+          setGameState('PLAYING');
+          setActiveBranch("default");
+          setSequenceIndex(0);
+          setStats(s => ({ ...s, energy: Math.min(100, s.energy + 20) }));
+          AudioManager.playBGM(day >= 3 ? 'hope' : 'calm');
+        } else {
+          setGameState('ENDING');
+        }
+      };
+
+      // --- RENDERERS ---
+
+      if (gameState === 'START') {
+        return (
+          <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-bgDark text-center">
+            <h1 className="text-4xl font-black mb-2 text-white font-korean">다른 뇌로 사는 5일</h1>
+            <p className="text-gray-400 mb-12">다른 인생이라고, 틀린 인생은 아니다</p>
+            <Button onClick={() => setGameState('INTRO')}>시작하기</Button>
+            <p className="mt-8 text-xs text-gray-600">※ 소리가 포함되어 있습니다</p>
+          </div>
+        );
+      }
+
+      if (gameState === 'INTRO') {
+        const currentStep = INTRO_SEQUENCE[introIndex] || {};
+        return (
+          <div className="h-screen w-full flex flex-col items-center justify-center p-8 bg-bgDark relative overflow-hidden">
+            <ScreenEffect type={currentEffect} />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={introIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`text-xl md:text-2xl font-medium leading-relaxed ${currentStep.type === 'critic' ? 'text-red-400 font-bold' : 'text-gray-100'}`}
+              >
+                {currentStep.text}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        );
+      }
+
+      if (gameState === 'NAME') {
+        return (
+          <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-bgDark">
+            <div className="w-full max-w-md space-y-6">
+              <p className="text-gray-300 text-lg mb-4 whitespace-pre-line">
+                이 이야기의 주인공은 당신입니다.{'\n'}당신의 이름을 알려주세요.
+              </p>
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="이름 입력"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-4 text-white text-xl focus:border-blue-500 outline-none"
+              />
+              <Button
+                disabled={!playerName.trim()}
+                onClick={() => {
+                  setGameState('PLAYING');
+                  AudioManager.playBGM('calm');
+                }}
+              >
+                5일간의 여정 시작
+              </Button>
+              <div className="mt-8 text-center space-y-1 animate-pulse-slow">
+                <p className="text-gray-500 text-xs">3분이면 충분합니다. 꼭 끝까지 살아남으세요.</p>
+                <p className="text-gray-500 text-xs"><span className="text-red-400 font-bold"><CountUp end={49} />%</span>만이 끝까지 살아남습니다.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === 'PLAYING') {
+        const content = getCurrentContent();
+
+        // Handle Minigame Trigger
+        if (content.minigame && !sceneResult && !minigameActive) {
+          return <FocusMinigame onComplete={(success) => {
+            // Fake minigame result handling for demo
+            handleChoice({
+              text: "게임 완료",
+              stats: success ? { mental: +10 } : { mental: -10 },
+              next: content.next,
+              result: success ? "집중력을 되찾았습니다!" : "주의력이 흩어졌습니다..."
+            });
+          }} />;
+        }
+
+        // Handle Sequence
+        const isSequence = content.sequence && sequenceIndex < content.sequence.length;
+        const currentSeqItem = isSequence ? content.sequence[sequenceIndex] : null;
+
+        // Timer initialization moved to effect below (outside conditional render)
+
+        return (
+          <div className="min-h-screen bg-bgDark pb-8">
+            <ScreenEffect type={currentEffect || (currentSeqItem?.effect)} />
+
+            {/* Header / Stats */}
+            <div className="bg-bgCard p-4 sticky top-0 z-10 border-b border-gray-800 backdrop-blur-md">
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-bold text-gray-200">Day {day} {phase === 'morning' ? '아침' : phase === 'afternoon' ? '오후' : '저녁'}</span>
+                <span className="text-gray-400 text-sm">{playerName}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <StatBar label="에너지" value={stats.energy} color="#22c55e" />
+                <StatBar label="멘탈" value={stats.mental} color="#8b5cf6" />
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6 max-w-2xl mx-auto mt-4 relative z-50">
+              {/* Turn Illustration */}
+              <TurnImage day={day} phase={phase} branch={activeBranch} />
+
+              <div className="min-h-[200px] mb-8 flex flex-col justify-center">
+                {sceneResult ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-lg text-blue-200 leading-relaxed whitespace-pre-line bg-gray-900/50 p-4 rounded-lg border border-blue-900/30"
+                  >
+                    {sceneResult.text}
+                  </motion.div>
+                ) : isSequence ? (
+                  <div
+                    className="cursor-pointer group"
+                    onClick={() => {
+                      AudioManager.playSFX('click');
+                      setSequenceIndex(i => i + 1);
+                    }}>
+                    {currentSeqItem.speaker && (
+                      <div className={`text-sm font-bold mb-2 ${currentSeqItem.style === 'critic' ? 'text-red-400' : 'text-blue-400'}`}>
+                        {currentSeqItem.speaker}
+                      </div>
+                    )}
+                    <Typewriter
+                      text={currentSeqItem.text || ""}
+                      speed={20}
+                    />
+                    <div className="mt-8 py-3 w-full border border-blue-500/30 rounded-lg text-center text-blue-300 font-bold animate-pulse bg-blue-900/20 group-hover:bg-blue-900/40 transition-colors">
+                      터치하여 계속하기
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {content.voiceBattle && <div className="text-center text-sm text-purple-400 mb-2">내면의 목소리를 선택하세요</div>}
+                    <Typewriter
+                      text={content.text || (content.sequence ? content.sequence[content.sequence.length - 1].text : "")}
+                      onComplete={() => setTextComplete(true)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Choices & Timer */}
+              <div className="space-y-4">
+                {sceneResult ? (
+                  <Button onClick={proceedPhase}>다음으로</Button>
+                ) : !isSequence && (
+                  <div className={`transition-opacity duration-500 ${textComplete || (content.sequence && sequenceIndex >= content.sequence.length) ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+
+                    {choiceTimer !== null && (
+                      <div className="w-full bg-gray-800 h-1 mb-4 rounded overflow-hidden">
+                        <div
+                          className="bg-red-500 h-full transition-all duration-1000 ease-linear"
+                          style={{ width: `${(choiceTimer / content.timer) * 100}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {content.choices && content.choices.map((choice) => (
+                      <Button
+                        key={choice.id}
+                        variant="choice"
+                        onClick={() => handleChoice(choice)}
+                      >
+                        <div className="text-lg text-gray-200 mb-1">{choice.text}</div>
+                        {choice.subtext && <div className="text-sm text-gray-500">{choice.subtext}</div>}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === 'SUMMARY') {
+        return (
+          <div className="h-screen flex flex-col items-center justify-center p-6 bg-bgDark">
+            <h2 className="text-3xl font-bold mb-6 text-white">Day {day} 완료</h2>
+            <div className="w-full max-w-md bg-bgCard p-6 rounded-xl border border-gray-800 mb-8 space-y-4">
+              <div className="text-center text-gray-400 mb-4">
+                오늘 하루, 무너지지 않고 버텨냈습니다.
+              </div>
+              {insights.length > 0 && (
+                <div className="bg-purple-900/20 p-4 rounded-lg">
+                  <div className="text-purple-400 text-xs font-bold mb-2">획득한 인사이트</div>
+                  <div className="flex flex-wrap gap-2">
+                    {insights.map(i => (
+                      <span key={i} className="px-2 py-1 bg-purple-900/50 rounded text-sm text-purple-200">
+                        {i}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <Button onClick={nextDay}>
+              {day < 5 ? "다음 날로" : "최종 결과 보기"}
+            </Button>
+          </div>
+        );
+      }
+
+      // --- REVIEW SCREEN ---
+      if (gameState === 'REVIEW') {
+        // Filter duplicate history attempts if any (simple unique check)
+        const uniqueHistory = choiceHistory.filter((v, i, a) => a.findIndex(t => (t.day === v.day && t.phase === v.phase)) === i);
+
+        return (
+          <div className="min-h-screen bg-bgDark p-6 flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-white mb-2 mt-8">나의 5일 기록</h2>
+            <p className="text-gray-400 text-sm mb-8 text-center">당신의 선택들이 만든 흔적입니다.</p>
+
+            <div className="w-full max-w-md space-y-6 mb-20 overflow-y-auto pb-10">
+              {uniqueHistory.map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="bg-bgCard p-4 rounded-xl border border-gray-800 relative ml-2"
+                >
+                  {/* Timeline connector line */}
+                  {idx < uniqueHistory.length - 1 && (
+                    <div className="absolute left-[-11px] top-8 bottom-[-24px] w-0.5 bg-gray-800"></div>
+                  )}
+
+                  <div className="absolute -left-5 top-4 w-6 h-6 bg-blue-900 rounded-full border-4 border-bgDark flex items-center justify-center text-[10px] text-blue-200 font-bold z-10">
+                    {item.day}
+                  </div>
+                  <div className="text-xs text-gray-500 mb-1 ml-1 uppercase tracking-wider font-mono">
+                    {item.phase === 'morning' ? 'MORNING' : item.phase === 'afternoon' ? 'AFTERNOON' : 'EVENING'}
+                  </div>
+                  <div className="ml-1 border-l-2 border-blue-900/30 pl-3 py-1">
+                    <p className="text-blue-300 font-bold mb-1">"{item.text}"</p>
+                    <p className="text-gray-400 text-sm leading-relaxed">{item.result}</p>
+                  </div>
+                </motion.div>
+              ))}
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                className="text-center py-8"
+              >
+                <p className="text-white mb-6">이 모든 선택이 당신이었습니다.</p>
+                <Button onClick={() => setGameState('ENDING')}>결과 확인하기</Button>
+              </motion.div>
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === 'ENDING') {
+        const getEndingType = () => {
+          if (insights.length >= 5) return "insight";
+          if (selfBlameCount < 3) return "compassion";
+          if (stats.mental < 30) return "survivor";
+          return "recovery";
+        };
+        const ending = getEndingType();
+
+        return (
+          <div className="min-h-screen bg-bgDark p-6 flex flex-col items-center justify-center text-center">
+            <ScreenEffect type="warm" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1 }}
+              className="max-w-lg w-full"
+            >
+              <h2 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                {ending === 'insight' ? "깨달음의 여정" :
+                  ending === 'compassion' ? "자기 연민의 시작" :
+                    ending === 'recovery' ? "회복의 달인" : "끈질긴 생존자"}
+              </h2>
+              <p className="text-gray-400 mb-8">5일간의 생존 기록</p>
+
+              <div className="bg-bgCard p-6 rounded-2xl border border-gray-800 mb-8 text-left space-y-4 shadow-2xl">
+                <p className="leading-relaxed text-gray-200">
+                  {ending === 'insight' && "당신은 많은 것을 깨달았습니다. 이 깨달음들이 앞으로의 여정에서 당신을 지켜줄 것입니다."}
+                  {ending === 'compassion' && "당신은 자신을 덜 혼내는 법을 배웠습니다. 자신에게 친절해지는 것, 그것이 변화의 시작입니다."}
+                  {ending === 'recovery' && "당신은 여러 번 무너졌지만 다시 일어났습니다. 무너지지 않는 것이 강함이 아니라, 다시 일어나는 것이 진짜 강함입니다."}
+                  {ending === 'survivor' && "쉽지 않은 5일이었습니다. 하지만 당신은 여기 있습니다. 살아남은 것만으로도 충분히 대단합니다."}
+                </p>
+              </div>
+
+              <Button onClick={() => setGameState('PRE_SHOP')} variant="primary" className="animate-pulse-slow">
+                새로운 시작을 위해
+              </Button>
+            </motion.div>
+          </div>
+        );
+      }
+
+      // --- PRE SHOP ---
+      if (gameState === 'PRE_SHOP') {
+        return (
+          <div className="min-h-screen bg-bgDark p-6 flex flex-col items-center justify-center text-center">
+            <ScreenEffect type="warm" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md w-full bg-bgCard p-8 rounded-2xl border border-gray-700 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+
+              <h2 className="text-2xl font-bold mb-6 text-white">잠깐!</h2>
+
+              <div className="space-y-4 text-left text-gray-300 mb-8 leading-relaxed">
+                <p>
+                  5일간의 생존 게임은 끝났지만,<br />
+                  우리의 <span className="text-blue-300 font-bold">실제 삶은 계속됩니다.</span>
+                </p>
+                <p>
+                  게임에서 얻은 작은 통찰들을<br />
+                  내 하루하루에 적용하여 <span className="text-yellow-300 font-bold">경제적 자유</span>까지<br />
+                  연결하고 싶지 않으신가요?
+                </p>
+                <div className="bg-gray-800/80 p-4 rounded-xl border border-gray-700 mt-4">
+                  <p className="font-bold text-white mb-2">📘 [다른 인생] 가이드북 내용</p>
+                  <ul className="text-sm space-y-1 text-gray-400 list-disc pl-4">
+                    <li>의지박약도 해내는 루틴 설계법</li>
+                    <li>감정 기복을 돈으로 바꾸는 콘텐츠 전략</li>
+                    <li>성인 ADHD 생존자들의 현실 조언</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-center text-gray-400 mt-4">
+                  지금 확인하시면 기존 40% 할인에 더해<br />
+                  <span className="text-red-400 font-bold underline">추가 10% 시크릿 할인 코드</span>를 드립니다.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Button onClick={() => setGameState('SHOP')} variant="primary">
+                  혜택 확인해볼게요
+                </Button>
+                <button
+                  onClick={() => setGameState('START')}
+                  className="text-gray-500 text-sm hover:text-gray-300 transition-colors py-2"
+                >
+                  괜찮아요, 메인으로 돌아갈게요
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        );
+      }
+
+      // --- HIDDEN SHOP ---
+      if (gameState === 'SHOP') {
+        const HiddenShop = () => {
+          const [timeLeft, setTimeLeft] = useState(180);
+          const [copied, setCopied] = useState(false);
+
+          useEffect(() => {
+            const timer = setInterval(() => setTimeLeft(t => Math.max(0, t - 1)), 1000);
+            return () => clearInterval(timer);
+          }, []);
+
+          const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+          const copyCode = () => {
+            navigator.clipboard.writeText("onelife2026");
+            setCopied(true);
+            AudioManager.playSFX('success');
+            setTimeout(() => setCopied(false), 2000);
+          };
+
+          return (
+            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black p-6 flex flex-col items-center">
+              <div className="w-full max-w-md bg-white text-gray-900 rounded-2xl overflow-hidden shadow-2xl relative">
+                {/* Timer Banner */}
+                <div className="bg-red-600 text-white p-2 text-center font-bold flex justify-between px-4 items-center">
+                  <span>특별 제안 마감 임박</span>
+                  <span className="font-mono text-xl">{formatTime(timeLeft)}</span>
+                </div>
+
+                <div className="p-6">
+                  <div className="uppercase text-xs font-bold text-gray-500 tracking-wider mb-2">HIDDEN CHAPTER UNLOCKED</div>
+                  <h1 className="text-2xl font-black mb-1 leading-tight">다른 인생이라고<br />틀린 인생은 아니다</h1>
+                  <p className="text-sm text-gray-600 mb-6">성인 ADHD형 인간의 경제적 자립 가이드</p>
+
+                  <div className="bg-gray-100 p-4 rounded-lg mb-6 text-sm space-y-2">
+                    <p>📚 <b>게임 그 이상의 이야기:</b></p>
+                    <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                      <li>나에게 맞는 루틴 설계법</li>
+                      <li>감정 기복을 에너지로 바꾸는 법</li>
+                      <li>경쟁 없이 돈 버는 콘텐츠 전략</li>
+                    </ul>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="text-gray-500 line-through text-sm">정가 55,000원</div>
+                    <div className="flex items-end gap-2">
+                      <span className="text-4xl font-black text-gray-900">
+                        33,000원
+                      </span>
+                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded font-bold mb-2">40% OFF</span>
+                    </div>
+                  </div>
+
+                  {/* Coupon Section */}
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                    <div className="text-sm text-blue-800 font-bold mb-2">
+                      구매 페이지에서 코드 입력 시 <span className="text-red-600">추가 10% 할인</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white border border-blue-200 rounded-lg p-1 pl-3">
+                      <code className="font-mono font-bold text-lg text-gray-800 flex-1">onelife2026</code>
+                      <button
+                        onClick={copyCode}
+                        className={`px-3 py-2 rounded-md font-bold text-sm transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-gray-700'}`}
+                      >
+                        {copied ? '복사됨!' : '복사'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://www.latpeed.com/products/krq6x"
+                    target="_blank"
+                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-4 rounded-xl font-bold text-lg shadow-lg transform transition active:scale-95"
+                  >
+                    지금 시작하기
+                  </a>
+
+                  <p className="text-center text-xs text-gray-400 mt-4">
+                    게임에서 경험한 변화를 실제 삶에서도 만들어보세요.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+        return <HiddenShop />;
+      }
+
+      return null;
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
